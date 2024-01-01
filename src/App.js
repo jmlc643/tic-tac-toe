@@ -4,19 +4,34 @@ import {Square} from "./components/Square";
 import {TURNS} from "./constants";
 import {checkWinnerFrom, checkEndGame} from "./logic/board";
 import {WinnerModal} from "./components/WinnerModal";
+import {resetGameToStorage, saveGameToStorage} from "./logic/storage";
 
 function App() {
-    const [board, setBoard] = useState(
-        Array(9).fill(null)
-    )
+    //Los useState siempre tienen que estar dentro del cuerpo del componente
+    //Prohibido que esten en un if o un loop
 
-    const [turn, setTurn] = useState(TURNS.X)
+    const [board, setBoard] = useState(() =>{
+        const boardFromStorage = window.localStorage.getItem('board')
+        return boardFromStorage ? JSON.parse(boardFromStorage) : Array(9).fill(null)
+        /*
+        Otra manera de hacerlo es :
+        if(boardFromStorage) return JSON.parse(boardFromStorage)
+        return Array(9).fill(null)
+        debido a que no es necesario poner un else por los return
+        */
+    })
+
+    const [turn, setTurn] = useState(() => {
+        const turnFromStorage = window.localStorage.getItem('turn')
+        return turnFromStorage ?? TURNS.X
+    })
     const [winner, setWinner] = useState(null)
 
     const resetGame = () => {
         setBoard(Array(9).fill(null))
         setTurn(TURNS.X)
         setWinner(null)
+        resetGameToStorage()
     }
 
     const updateBoard = (index) => {
@@ -32,6 +47,11 @@ function App() {
         const newTurn = turn === TURNS.X ? TURNS.O : TURNS.X
         setTurn(newTurn)
 
+        saveGameToStorage({
+            board: newBoard,
+            turn: newTurn
+        })
+
         //Revisar si hay ganador
         const newWinner = checkWinnerFrom(newBoard)
         if(newWinner){
@@ -41,6 +61,7 @@ function App() {
             setWinner(false)
         }
     }
+
 
   return(
       <main className='board'>
